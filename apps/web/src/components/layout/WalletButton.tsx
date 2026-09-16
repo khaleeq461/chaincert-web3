@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
 import { injected } from 'wagmi/connectors';
-import { Wallet, LogOut, ChevronDown, Check, AlertTriangle, Copy, Globe } from 'lucide-react';
+import { Wallet, LogOut, ChevronDown, Check, AlertTriangle, Copy, Globe, ExternalLink } from 'lucide-react';
 import { formatAddress } from '@chaincert/shared';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 
 export function WalletButton() {
+  const [mounted, setMounted] = useState(false);
   const { address, isConnected } = useAccount();
   const { connectors, connect, isPending, error: connectError } = useConnect();
   const { disconnect } = useDisconnect();
@@ -16,7 +17,12 @@ export function WalletButton() {
   const { switchChain, isPending: isSwitching } = useSwitchChain();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [noWalletModal, setNoWalletModal] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleCopy = () => {
     if (address) {
@@ -26,15 +32,15 @@ export function WalletButton() {
     }
   };
 
-  const expectedChainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID || '31337');
+  const expectedChainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID || '11155111');
   const isSupportedChain = chainId === expectedChainId || chainId === 11155111;
 
   const getNetworkName = (id: number) => {
     switch (id) {
-      case 31337:
-        return 'Hardhat Localhost';
       case 11155111:
         return 'Ethereum Sepolia';
+      case 31337:
+        return 'Hardhat Localhost';
       case 1:
         return 'Ethereum Mainnet';
       case 84532:
@@ -44,62 +50,98 @@ export function WalletButton() {
     }
   };
 
+  const handleConnect = async () => {
+    if (typeof window === 'undefined') return;
+
+    const ethereum = (window as any).ethereum;
+    if (!ethereum) {
+      setNoWalletModal(true);
+      return;
+    }
+
+    try {
+      // Trigger native MetaMask prompt
+      await ethereum.request({ method: 'eth_requestAccounts' });
+      const targetConnector = connectors.find((c) => c.id === 'injected') || connectors[0] || injected();
+      connect({ connector: targetConnector });
+    } catch (err: any) {
+      console.warn('Native request error, falling back to connector:', err);
+      const targetConnector = connectors.find((c) => c.id === 'injected') || connectors[0] || injected();
+      connect({ connector: targetConnector });
+    }
+  };
+
+  if (!mounted) {
+    return (
+      <Button variant="primary" size="sm" disabled>
+        <Wallet className="w-4 h-4" />
+        Connect Wallet
+      </Button>
+    );
+  }
+
   if (!isConnected) {
     return (
       <>
         <Button
           variant="primary"
           size="sm"
-          onClick={() => setIsModalOpen(true)}
+          onClick={handleConnect}
           isLoading={isPending}
         >
           <Wallet className="w-4 h-4" />
           Connect Wallet
         </Button>
 
+        {/* Modal shown if no Web3 wallet is installed */}
         <Modal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          title="Connect Web3 EVM Wallet"
-          description="Select your browser wallet to interact with ChainCert smart contracts."
+          isOpen={noWalletModal}
+          onClose={() => setNoWalletModal(false)}
+          title="MetaMask Not Detected"
+          description="A Web3 browser extension is required to connect to ChainCert."
           maxWidth="sm"
         >
-          <div className="flex flex-col gap-3 mt-2">
-            <button
-              onClick={() => {
-                const targetConnector = connectors[0] || injected();
-                connect({ connector: targetConnector });
-              }}
-              disabled={isPending}
-              className="w-full flex items-center justify-between p-4 rounded-xl border border-card-border bg-black/30 hover:bg-brand-500/10 hover:border-brand-500/30 transition text-left cursor-pointer disabled:opacity-50"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-brand-500/20 flex items-center justify-center text-brand-400">
-                  <Wallet className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-white">
-                    {isPending ? 'Connecting...' : 'Browser Wallet (MetaMask)'}
-                  </div>
-                  <div className="text-xs text-gray-400">MetaMask, Brave, Coinbase, Rainbow</div>
-                </div>
-              </div>
-              <ChevronDown className="w-4 h-4 text-gray-400 -rotate-90" />
-            </button>
-
-            {connectError && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300">
-                {connectError.message.includes('rejected')
-                  ? 'Connection request was cancelled in your wallet.'
-                  : `Connection error: ${connectError.message}`}
-              </div>
-            )}
-
-            <div className="p-3 rounded-xl bg-card border border-card-border text-[11px] text-gray-400">
-              💡 Ensure your MetaMask extension is unlocked and set to <strong>Ethereum Sepolia Testnet</strong>.
+          <div className="flex flex-col gap-4 mt-2">
+            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200">
+              No Ethereum wallet extension (like MetaMask) was detected in this browser. Please install MetaMask to interact with the blockchain.
             </div>
+
+            <a
+              href="https://metamask.io/download/"
+              target="_blank"
+              rel="noreferrer"
+              className="w-full"
+            >
+              <Button variant="primary" className="w-full gap-2">
+                <ExternalLink className="w-4 h-4" />
+                Install MetaMask Extension
+              </Button>
+            </a>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setNoWalletModal(false)}
+            >
+              Close
+            </Button>
           </div>
         </Modal>
+
+        {connectError && (
+          <Modal
+            isOpen={Boolean(connectError)}
+            onClose={() => {}}
+            title="Connection Notice"
+            maxWidth="sm"
+          >
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300">
+              {connectError.message.includes('rejected')
+                ? 'Connection request was cancelled in your wallet.'
+                : `Notice: ${connectError.message}`}
+            </div>
+          </Modal>
+        )}
       </>
     );
   }
@@ -121,12 +163,12 @@ export function WalletButton() {
 
         {!isSupportedChain && (
           <button
-            onClick={() => switchChain?.({ chainId: (expectedChainId as 31337 | 11155111 | 84532) })}
+            onClick={() => switchChain?.({ chainId: 11155111 })}
             disabled={isSwitching}
             className="flex items-center gap-1.5 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-lg hover:bg-amber-500/20 transition cursor-pointer"
           >
             <AlertTriangle className="w-3.5 h-3.5" />
-            Switch
+            Switch to Sepolia
           </button>
         )}
 
@@ -172,10 +214,10 @@ export function WalletButton() {
             <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 flex items-center justify-between">
               <span>Wrong network</span>
               <button
-                onClick={() => switchChain?.({ chainId: (expectedChainId as 31337 | 11155111 | 84532) })}
+                onClick={() => switchChain?.({ chainId: 11155111 })}
                 className="text-xs font-bold text-amber-400 hover:underline"
               >
-                Switch to {expectedChainId}
+                Switch to Sepolia
               </button>
             </div>
           )}
