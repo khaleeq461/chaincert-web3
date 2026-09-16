@@ -10,7 +10,7 @@ import { Button } from '../ui/Button';
 
 export function WalletButton() {
   const { address, isConnected } = useAccount();
-  const { connect, isPending, error: connectError } = useConnect();
+  const { connectors, connect, isPending, error: connectError } = useConnect();
   const { disconnect } = useDisconnect();
   const chainId = useChainId();
   const { switchChain, isPending: isSwitching } = useSwitchChain();
@@ -67,16 +67,20 @@ export function WalletButton() {
           <div className="flex flex-col gap-3 mt-2">
             <button
               onClick={() => {
-                connect({ connector: injected() });
+                const targetConnector = connectors[0] || injected();
+                connect({ connector: targetConnector });
               }}
-              className="w-full flex items-center justify-between p-4 rounded-xl border border-card-border bg-black/30 hover:bg-brand-500/10 hover:border-brand-500/30 transition text-left cursor-pointer"
+              disabled={isPending}
+              className="w-full flex items-center justify-between p-4 rounded-xl border border-card-border bg-black/30 hover:bg-brand-500/10 hover:border-brand-500/30 transition text-left cursor-pointer disabled:opacity-50"
             >
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-brand-500/20 flex items-center justify-center text-brand-400">
                   <Wallet className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-white">Browser Wallet (Injected)</div>
+                  <div className="text-sm font-semibold text-white">
+                    {isPending ? 'Connecting...' : 'Browser Wallet (MetaMask)'}
+                  </div>
                   <div className="text-xs text-gray-400">MetaMask, Brave, Coinbase, Rainbow</div>
                 </div>
               </div>
@@ -87,9 +91,13 @@ export function WalletButton() {
               <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300">
                 {connectError.message.includes('rejected')
                   ? 'Connection request was cancelled in your wallet.'
-                  : 'Unable to connect: please ensure MetaMask is installed and unlocked.'}
+                  : `Connection error: ${connectError.message}`}
               </div>
             )}
+
+            <div className="p-3 rounded-xl bg-card border border-card-border text-[11px] text-gray-400">
+              💡 Ensure your MetaMask extension is unlocked and set to <strong>Ethereum Sepolia Testnet</strong>.
+            </div>
           </div>
         </Modal>
       </>
