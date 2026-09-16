@@ -1,0 +1,24 @@
+{
+  "name": "chaincert-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ChainCert — Blockchain-Based Certificate Verification Platform",
+  "author": "Khaleeq ur Rahman & Shahab",
+  "workspaces": [
+    "packages/*",
+    "contracts",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "contracts:compile": "npm run compile --workspace=contracts",
+    "contracts:test": "npm run test --workspace=contracts",
+    "contracts:node": "npm run node --workspace=contracts"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

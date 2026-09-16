@@ -1,0 +1,39 @@
+{
+  "name": "@chaincert/web",
+  "version": "1.0.0",
+  "description": "ChainCert Web3 Next.js Application",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start --port 3000",
+    "typecheck": "tsc --noEmit",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@chaincert/shared": "*",
+    "@tanstack/react-query": "^5.66.0",
+    "clsx": "^2.1.1",
+    "jspdf": "^4.2.1",
+    "lucide-react": "^0.475.0",
+    "next": "^15.1.7",
+    "qrcode": "^1.5.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^3.0.1",
+    "viem": "^2.23.0",
+    "wagmi": "^2.14.11"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.9",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^15.1.7",
+    "postcss": "^8.5.1",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.3"
+  }
+}

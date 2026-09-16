@@ -1,0 +1,27 @@
+{
+  "name": "@chaincert/contracts",
+  "version": "1.0.0",
+  "description": "ChainCert Solidity Smart Contracts and Hardhat Suite",
+  "private": true,
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "node": "hardhat node",
+    "deploy:local": "hardhat run scripts/deploy.ts --network localhost",
+    "deploy:sepolia": "hardhat run scripts/deploy.ts --network sepolia",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.2.0",
+    "dotenv": "^16.6.1"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@types/chai": "^4.3.16",
+    "@types/mocha": "^10.0.7",
+    "@types/node": "^20.14.9",
+    "hardhat": "^2.22.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  }
+}
