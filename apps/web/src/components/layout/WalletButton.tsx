@@ -53,14 +53,20 @@ export function WalletButton() {
   const handleConnect = async () => {
     if (typeof window === 'undefined') return;
 
-    const ethereum = (window as any).ethereum;
+    let ethereum = (window as any).ethereum;
     if (!ethereum) {
       setNoWalletModal(true);
       return;
     }
 
+    // Handle multiple wallet extensions (e.g. Phantom vs MetaMask conflict)
+    if (ethereum.providers?.length) {
+      const mm = ethereum.providers.find((p: any) => p.isMetaMask && !p.isPhantom);
+      if (mm) ethereum = mm;
+    }
+
     try {
-      // Trigger native MetaMask prompt
+      // Trigger MetaMask prompt directly
       await ethereum.request({ method: 'eth_requestAccounts' });
       const targetConnector = connectors.find((c) => c.id === 'injected') || connectors[0] || injected();
       connect({ connector: targetConnector });
